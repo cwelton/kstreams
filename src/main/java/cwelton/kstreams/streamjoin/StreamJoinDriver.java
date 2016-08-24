@@ -25,20 +25,19 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.TopologyBuilder;
 
 /**
- * StreamUnionDriver - Provides example of an output stream that is the union of two input streams.
+ * StreamJoinDriver - Provides example of an output stream that merges two input streams.
  *
- * By adding both input streams as sources to our processor:
- *     <code>.addProcessor("PROCESS", PassThroughProcessor::new, "SOURCE-1", "SOURCE-2")</code>
- *
- * Data from inputs will be received, and the PassThroughProcessor will forward messages to its children.
+ * Similar to StreamUnionDriver, but with a more complex processor that creates output messages
+ * constructed of {"left": string, "right": string} where "left" is the last message received on
+ * the "item-1" topic, and "right" is the last message received on the "item-2" topic.
  *
  * Created by cwelton on 8/24/16.
  */
-public class StreamUnionDriver {
+public class StreamJoinDriver {
 
     private StreamsConfig config;
 
-    public StreamUnionDriver(StreamsConfig config) {
+    public StreamJoinDriver(StreamsConfig config) {
         this.config = config;
     }
 
@@ -54,12 +53,12 @@ public class StreamUnionDriver {
         topologyBuilder
                 .addSource("SOURCE-1", stringDeserializer, itemJsonDeserializer, "item-1")
                 .addSource("SOURCE-2", stringDeserializer, itemJsonDeserializer, "item-2")
-                .addProcessor("PROCESS", PassThroughProcessor::new, "SOURCE-1", "SOURCE-2")
+                .addProcessor("PROCESS", JoinProcessor::new, "SOURCE-1", "SOURCE-2")
                 .addSink("SINK", "item-union", stringSerializer, itemJsonSerializer, "PROCESS");
 
-        System.out.println("Starting Union Example");
+        System.out.println("Starting Join Example");
         KafkaStreams streaming = new KafkaStreams(topologyBuilder, config);
         streaming.start();
-        System.out.println("Now started Union Example");
+        System.out.println("Now started Join Example");
     }
 }

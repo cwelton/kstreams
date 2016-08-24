@@ -21,6 +21,7 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.internals.ProcessorContextImpl;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -29,8 +30,9 @@ import java.util.Properties;
 public class StreamTest extends TestCase {
 
     private class MockContext extends ProcessorContextImpl {
-        public Object key;
-        public Object value;
+        protected Object key;
+        protected Object value;
+        protected String topic;
 
         public MockContext(StreamsConfig config) {
             super(null,null,config,null,null,null);
@@ -46,6 +48,23 @@ public class StreamTest extends TestCase {
             this.key = key;
             this.value = value;
         }
+
+        @Override
+        public String topic() {
+            return topic;
+        }
+
+        public void setTopic(String topic) {
+            this.topic = topic;
+        }
+
+        public Object getValue() {
+            Object result = value;
+            value = null;
+            return result;
+        }
+
+
     }
 
     private static Properties getProperties() {
@@ -57,7 +76,7 @@ public class StreamTest extends TestCase {
     }
 
     @Test
-    public void test() throws Exception {
+    public void testPassThroughProcessor() throws Exception {
         StreamsConfig config = new StreamsConfig(getProperties());
         MockContext context = new MockContext(config);
         PassThroughProcessor processor = new PassThroughProcessor();
@@ -68,9 +87,62 @@ public class StreamTest extends TestCase {
         // Pass through processor forwards items to children without modification
         // Looking at the context.value should show the last item processed.
         processor.process(null, item1);
-        assertEquals(context.value, item1);
+        assertEquals(context.getValue(), item1);
 
         processor.process(null, item2);
-        assertEquals(context.value, item2);
+        assertEquals(context.getValue(), item2);
+    }
+
+    @Test
+    public void testJoinProcessor() throws Exception {
+        StreamsConfig config = new StreamsConfig(getProperties());
+        MockContext context = new MockContext(config);
+        JoinProcessor processor = new JoinProcessor();
+        processor.init(context);
+        Item item1 = new Item("value-1");
+        Item item2 = new Item("value-2");
+        Item item3 = new Item("value-3");
+        Item item4 = new Item("value-4");
+        Item item5 = new Item("value-5");
+
+        // First message doesn't cause any tuple to be emitted
+        context.topic = "item-1";
+        processor.process(null, item1);
+        List<Item> value = (List) context.getValue();
+        assertEquals(value, null);
+
+        // Second message on same topic results in seeing a tuple of (first message, null)
+        processor.process(null, item2);
+        value = (List) context.getValue();
+        assertEquals(value.get(0), item1);
+        assertEquals(value.get(1), null);
+        context.value = null;
+
+        // A message on the other topic results in seeing a tuple of (second message, third message)
+        context.topic = "item-2";
+        processor.process(null, item3);
+        value = (List) context.getValue();
+        assertEquals(value.get(0), item2);
+        assertEquals(value.get(1), item3);
+        context.value = null;
+
+        // Next message will not cause any tuple to be emitted
+        processor.process(null, item4);
+        value = (List) context.getValue();
+        assertEquals(value, null);
+
+        // One more message will result in seeing a tuple of (null, fourth message)
+        processor.process(null, item5);
+        value = (List) context.getValue();
+        assertEquals(value.get(0), null);
+        assertEquals(value.get(1), item4);
+        context.value = null;
+
+        // Final message on the first topic will result in seeing (final message, fifth message)
+        context.topic = "item-1";
+        processor.process(null, item1);
+        value = (List) context.getValue();
+        assertEquals(value.get(0), item1);
+        assertEquals(value.get(1), item5);
     }
 }

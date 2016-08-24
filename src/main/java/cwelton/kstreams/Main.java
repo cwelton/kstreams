@@ -15,6 +15,7 @@
  */
 package cwelton.kstreams;
 
+import cwelton.kstreams.streamjoin.StreamJoinDriver;
 import cwelton.kstreams.streamjoin.StreamUnionDriver;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
@@ -29,8 +30,13 @@ public class Main {
     public static void main(String[] args) {
         StreamsConfig config = new StreamsConfig(getProperties());
 
-        StreamUnionDriver unionDriver = new StreamUnionDriver(config);
-        unionDriver.run();
+        if (false) {
+            StreamUnionDriver unionDriver = new StreamUnionDriver(config);
+            unionDriver.run();
+        } else {
+            StreamJoinDriver joinDriver = new StreamJoinDriver(config);
+            joinDriver.run();
+        }
     }
 
     private static Properties getProperties() {
