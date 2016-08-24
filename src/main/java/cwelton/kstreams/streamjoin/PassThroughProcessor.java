@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016 Caleb Welton
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package cwelton.kstreams;
 
-import junit.framework.TestCase;
-import org.junit.Test;
+package cwelton.kstreams.streamjoin;
+
+import cwelton.kstreams.model.Item;
+import org.apache.kafka.streams.processor.AbstractProcessor;
 
 /**
  * Created by cwelton on 8/24/16.
  */
-public class StreamTest extends TestCase {
+public class PassThroughProcessor extends AbstractProcessor<String, Item> {
 
-    @Test
-    public void test() throws Exception {
-        assertTrue(true);
+    @Override
+    public void process(String key, Item value) {
+        context().forward(key, value);
+        context().commit();
     }
 }
