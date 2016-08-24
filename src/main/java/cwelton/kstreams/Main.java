@@ -16,6 +16,7 @@
 package cwelton.kstreams;
 
 import cwelton.kstreams.streamjoin.StreamJoinDriver;
+import cwelton.kstreams.streamjoin.StreamJoinDriver2;
 import cwelton.kstreams.streamjoin.StreamUnionDriver;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
@@ -26,16 +27,45 @@ import java.util.Properties;
  * Created by cwelton on 8/24/16.
  */
 public class Main {
+    private final static String[] default_args = {"join2"};
+
+    public static void usage() {
+        System.err.println("usage: <command> [union|join|join2]");
+        System.err.println("   union - read from topics 'item-1' and 'item-2' write to item-union");
+        System.err.println("   join  - read from topics 'item-1' and 'item-2' write to item-union");
+        System.err.println("   join2 - read from topics 'item-1' and 'thing' write to item-union (default)");
+        System.exit(1);
+    }
 
     public static void main(String[] args) {
         StreamsConfig config = new StreamsConfig(getProperties());
 
-        if (false) {
-            StreamUnionDriver unionDriver = new StreamUnionDriver(config);
-            unionDriver.run();
-        } else {
-            StreamJoinDriver joinDriver = new StreamJoinDriver(config);
-            joinDriver.run();
+        if (args.length > 1)
+            usage();
+        if (args.length == 0)
+            args = default_args;
+
+        switch (args[0]) {
+            case "union": {
+                StreamUnionDriver unionDriver = new StreamUnionDriver(config);
+                unionDriver.run();
+                break;
+            }
+
+            case "join": {
+                StreamJoinDriver joinDriver = new StreamJoinDriver(config);
+                joinDriver.run();
+                break;
+            }
+
+            case "join2": {
+                StreamJoinDriver2 joinDriver = new StreamJoinDriver2(config);
+                joinDriver.run();
+                break;
+            }
+
+            default:
+                usage();
         }
     }
 

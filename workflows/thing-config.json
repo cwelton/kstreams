@@ -1,0 +1,21 @@
+{
+  "workflows": [
+    {
+      "workflowName": "thing",
+      "workflowFilename": "thing.json"
+    }
+  ],
+  "producers": [
+    {
+      "type": "kafka",
+      "broker.server": "broker1",
+      "broker.port": 9092,
+      "topic": "thing",
+      "flatten" : false,
+      "sync": false
+    },
+    {
+      "type": "logger"
+    }
+  ]
+}

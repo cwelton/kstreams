@@ -17,6 +17,7 @@
 package cwelton.kstreams.streamjoin;
 
 import cwelton.kstreams.model.Item;
+import cwelton.kstreams.model.Thing;
 import org.apache.kafka.streams.processor.AbstractProcessor;
 
 import java.util.ArrayList;
@@ -32,33 +33,44 @@ import java.util.List;
  *
  * Created by cwelton on 8/24/16.
  */
-public class JoinProcessor extends AbstractProcessor<String, Item> {
+public class JoinProcessor2 extends AbstractProcessor<String, Object> {
 
     private Item left;
-    private Item right;
+    private Thing right;
 
     @Override
+    public void process(String key, Object value) {
+       if (value instanceof Item) {
+           process(key, (Item) value);
+       } else if (value instanceof Thing) {
+           process(key, (Thing) value);
+       } else {
+            throw new IllegalArgumentException("Unexpected value type '"+value.getClass().getName()+"'");
+       }
+    }
+
     public void process(String key, Item value) {
-        if (context().topic().equals("item-1")) {
-            if (left != null) {
-                emit();
-            }
-            left = value;
-        } else if (context().topic().equals("item-2")) {
-            if (right != null) {
-                emit();
-            }
-            right = value;
-        } else {
-            throw new IllegalStateException("unknown input topic '"+context().topic()+"'");
+        if (left != null) {
+            emit();
         }
+        left = value;
+        if (left != null && right != null) {
+            emit();
+        }
+    }
+
+    public void process(String key, Thing value) {
+        if (right != null) {
+            emit();
+        }
+        right = value;
         if (left != null && right != null) {
             emit();
         }
     }
 
     protected void emit() {
-        List<Item> pair = new ArrayList<>();
+        List<Object> pair = new ArrayList<>();
         pair.add(left);
         pair.add(right);
         context().forward(null, pair);
