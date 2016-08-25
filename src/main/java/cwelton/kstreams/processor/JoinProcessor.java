@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cwelton.kstreams.streamjoin;
+package cwelton.kstreams.processor;
 
 import cwelton.kstreams.model.Item;
 import org.apache.kafka.streams.processor.AbstractProcessor;

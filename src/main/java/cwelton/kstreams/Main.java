@@ -15,9 +15,11 @@
  */
 package cwelton.kstreams;
 
+import cwelton.kstreams.streamjoin.StreamJoin2Driver;
 import cwelton.kstreams.streamjoin.StreamJoinDriver;
-import cwelton.kstreams.streamjoin.StreamJoinDriver2;
 import cwelton.kstreams.streamjoin.StreamUnionDriver;
+import cwelton.kstreams.streamsplit.StreamBroadcastDriver;
+import cwelton.kstreams.streamsplit.StreamSplitDriver;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 
@@ -27,13 +29,16 @@ import java.util.Properties;
  * Created by cwelton on 8/24/16.
  */
 public class Main {
-    private final static String[] default_args = {"join2"};
+    private final static String[] default_args = {"union"};
 
     public static void usage() {
         System.err.println("usage: <command> [union|join|join2]");
-        System.err.println("   union - read from topics 'item-1' and 'item-2' write to item-union");
+        System.err.println("   union - read from topics 'item-1' and 'item-2' write to item-union (Default)");
         System.err.println("   join  - read from topics 'item-1' and 'item-2' write to item-union");
-        System.err.println("   join2 - read from topics 'item-1' and 'thing' write to item-union (default)");
+        System.err.println("   join2 - read from topics 'item-1' and 'thing' write to item-union");
+        System.err.println("   broadcast - read from topic 'item-1' broadcast to 'item-2' and 'item-union'");
+        System.err.println("   split - read from topic 'item-1' write to 'item-2' and 'item-union'");
+
         System.exit(1);
     }
 
@@ -47,20 +52,32 @@ public class Main {
 
         switch (args[0]) {
             case "union": {
-                StreamUnionDriver unionDriver = new StreamUnionDriver(config);
-                unionDriver.run();
+                StreamUnionDriver driver = new StreamUnionDriver(config);
+                driver.run();
                 break;
             }
 
             case "join": {
-                StreamJoinDriver joinDriver = new StreamJoinDriver(config);
-                joinDriver.run();
+                StreamJoinDriver driver = new StreamJoinDriver(config);
+                driver.run();
                 break;
             }
 
             case "join2": {
-                StreamJoinDriver2 joinDriver = new StreamJoinDriver2(config);
-                joinDriver.run();
+                StreamJoin2Driver driver = new StreamJoin2Driver(config);
+                driver.run();
+                break;
+            }
+
+            case "broadcast": {
+                StreamBroadcastDriver driver = new StreamBroadcastDriver(config);
+                driver.run();
+                break;
+            }
+
+            case "split": {
+                StreamSplitDriver driver = new StreamSplitDriver(config);
+                driver.run();
                 break;
             }
 

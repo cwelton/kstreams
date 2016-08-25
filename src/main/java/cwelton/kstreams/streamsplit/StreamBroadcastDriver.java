@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package cwelton.kstreams.streamjoin;
+package cwelton.kstreams.streamsplit;
 
 import cwelton.kstreams.model.Item;
-import cwelton.kstreams.processor.JoinProcessor;
+import cwelton.kstreams.processor.PassThroughProcessor;
 import cwelton.kstreams.serializer.JsonDeserializer;
 import cwelton.kstreams.serializer.JsonSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -26,19 +26,21 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.TopologyBuilder;
 
 /**
- * StreamJoinDriver - Provides example of an output stream that merges two input streams.
+ * StreamBroadcastDriver - Provides example of broadcasting an input stream to two input streams.
  *
- * Similar to StreamUnionDriver, but with a more complex processor that creates output messages
- * constructed of {"left": string, "right": string} where "left" is the last message received on
- * the "item-1" topic, and "right" is the last message received on the "item-2" topic.
+ * By adding both output streams with our processor as a source:
+ *     <code>.addSink("SINK-1", "item-2", stringSerializer, itemJsonSerializer, "PROCESS")</code>
+ *     <code>.addSink("SINK-2", "item-union", stringSerializer, itemJsonSerializer, "PROCESS")</code>
+ *
+ * Data from inputs will be received, and the PassThroughProcessor will forward messages to its children.
  *
  * Created by cwelton on 8/24/16.
  */
-public class StreamJoinDriver {
+public class StreamBroadcastDriver {
 
     private StreamsConfig config;
 
-    public StreamJoinDriver(StreamsConfig config) {
+    public StreamBroadcastDriver(StreamsConfig config) {
         this.config = config;
     }
 
@@ -52,14 +54,15 @@ public class StreamJoinDriver {
 
         TopologyBuilder topologyBuilder = new TopologyBuilder();
         topologyBuilder
-                .addSource("SOURCE-1", stringDeserializer, itemJsonDeserializer, "item-1")
-                .addSource("SOURCE-2", stringDeserializer, itemJsonDeserializer, "item-2")
-                .addProcessor("PROCESS", JoinProcessor::new, "SOURCE-1", "SOURCE-2")
-                .addSink("SINK", "item-union", stringSerializer, itemJsonSerializer, "PROCESS");
+                .addSource("SOURCE", stringDeserializer, itemJsonDeserializer, "item-1")
+                .addProcessor("PROCESS", PassThroughProcessor::new, "SOURCE")
+                .addSink("SINK-1", "item-2", stringSerializer, itemJsonSerializer, "PROCESS")
+                .addSink("SINK-2", "item-union", stringSerializer, itemJsonSerializer, "PROCESS");
+        ;
 
-        System.out.println("Starting Join Example");
+        System.out.println("Starting Broadcast Example");
         KafkaStreams streaming = new KafkaStreams(topologyBuilder, config);
         streaming.start();
-        System.out.println("Now started Join Example");
+        System.out.println("Now started Broadcast Example");
     }
 }

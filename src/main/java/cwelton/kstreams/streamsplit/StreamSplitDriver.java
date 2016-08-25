@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package cwelton.kstreams.streamjoin;
+package cwelton.kstreams.streamsplit;
 
 import cwelton.kstreams.model.Item;
-import cwelton.kstreams.model.Thing;
+import cwelton.kstreams.processor.PassThroughProcessor;
+import cwelton.kstreams.processor.SplitProcessor;
 import cwelton.kstreams.serializer.JsonDeserializer;
 import cwelton.kstreams.serializer.JsonSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -26,40 +27,42 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.TopologyBuilder;
 
 /**
- * StreamJoinDriver2 - Provides example of an output stream that merges two input streams.
+ * StreamSplitDriver - Provides example of splitting an input stream to two input streams.
  *
- * Identical to StreamJoinDriver, except shows a different way of handling consumption of
- * multiple input topics when the topics have different message formats.
+ * By adding both output streams with our processor as a source:
+ *     <code>.addSink("SINK-1", "item-2", stringSerializer, itemJsonSerializer, "PROCESS")</code>
+ *     <code>.addSink("SINK-2", "item-union", stringSerializer, itemJsonSerializer, "PROCESS")</code>
+ *
+ * Further the SplitProcessor will choose which output to send a message to.
  *
  * Created by cwelton on 8/24/16.
  */
-public class StreamJoinDriver2 {
+public class StreamSplitDriver {
 
     private StreamsConfig config;
 
-    public StreamJoinDriver2(StreamsConfig config) {
+    public StreamSplitDriver(StreamsConfig config) {
         this.config = config;
     }
 
     public void run() {
+
+        JsonDeserializer<Item> itemJsonDeserializer = new JsonDeserializer<>(Item.class);
+        JsonSerializer<Item> itemJsonSerializer = new JsonSerializer<>();
+
         StringDeserializer stringDeserializer = new StringDeserializer();
         StringSerializer stringSerializer = new StringSerializer();
-        JsonSerializer jsonSerializer = new JsonSerializer<>();
-
-        // Different Serializers for different input streams
-        JsonDeserializer<Item> itemJsonDeserializer = new JsonDeserializer<>(Item.class);
-        JsonDeserializer<Thing> thingJsonDeserializer = new JsonDeserializer<>(Thing.class);
 
         TopologyBuilder topologyBuilder = new TopologyBuilder();
         topologyBuilder
-                .addSource("SOURCE-1", stringDeserializer, itemJsonDeserializer, "item-1")
-                .addSource("SOURCE-2", stringDeserializer, thingJsonDeserializer, "thing")
-                .addProcessor("PROCESS", JoinProcessor2::new, "SOURCE-1", "SOURCE-2")
-                .addSink("SINK", "item-union", stringSerializer, jsonSerializer, "PROCESS");
+                .addSource("SOURCE", stringDeserializer, itemJsonDeserializer, "item-1")
+                .addProcessor("PROCESS", SplitProcessor::new, "SOURCE")
+                .addSink("SINK-1", "item-2", stringSerializer, itemJsonSerializer, "PROCESS")
+                .addSink("SINK-2", "item-union", stringSerializer, itemJsonSerializer, "PROCESS");
 
-        System.out.println("Starting Join2 Example");
+        System.out.println("Starting Split Example");
         KafkaStreams streaming = new KafkaStreams(topologyBuilder, config);
         streaming.start();
-        System.out.println("Now started Join2 Example");
+        System.out.println("Now started Split Example");
     }
 }

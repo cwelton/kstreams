@@ -16,6 +16,7 @@
 package cwelton.kstreams.streamjoin;
 
 import cwelton.kstreams.model.Item;
+import cwelton.kstreams.processor.PassThroughProcessor;
 import cwelton.kstreams.serializer.JsonDeserializer;
 import cwelton.kstreams.serializer.JsonSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
