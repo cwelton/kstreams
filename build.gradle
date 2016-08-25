@@ -14,7 +14,7 @@ targetCompatibility = 1.8
 mainClassName = 'cwelton.kstreams.Main'
 
 jar {
-  archiveName='cwelton-kstreamsstreams-$version.jar'
+  archiveName="cwelton-kstreams-${version}.jar"
 }
 
 repositories {

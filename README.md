@@ -11,7 +11,12 @@ Having a single processor consuming 2+ kafka streams.
 
 1. Having the same message format.
 
+a. 'union' -- Union two similar streams into a single stream
+b. 'join' -- Join two similar streams into a single stream
+
 2. Having different message format.
+
+a. 'join2'  -- Join two different streams into a single stream
 
 
 Splitting Streams

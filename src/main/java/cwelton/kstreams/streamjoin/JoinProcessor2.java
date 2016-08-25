@@ -24,22 +24,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * JoinProcessor - Returns a list of last seen value on each each of two input topics.
+ * JoinProcessor2 - Like JoinProcessor, but alternate implementation for differing message formats.
  *
- * 1. Returns a tuple of [item-1, item-2] based on items received on the two input topics.
+ * 1. Returns a tuple of [item-1, thing] based on items received on the two input topics.
  * 2. Each item received is emitted exactly once.
  * 3. If two, or more, messages are received on the same topic before a message is received
  *    on the other topic then one half of the tuple will be null.
  *
  * Created by cwelton on 8/24/16.
  */
-public class JoinProcessor2 extends AbstractProcessor<String, Object> {
+public class JoinProcessor2<V> extends AbstractProcessor<String, V> {
 
     private Item left;
     private Thing right;
 
+    /**
+     * process() - handle a single input item from one of the input streams
+     * @param key
+     * @param value
+     *
+     * Note: AbstractProcessor itself is a templated class which describes the class
+     * of input tuples.  Ideally this could be adjusted so that we could simply implement
+     * the two specific process implementation instead and let the JVM perform the
+     * disambiguation, however that doesn't work with the existing templating mechanisms.
+     *
+     */
     @Override
-    public void process(String key, Object value) {
+    public void process(String key, V value) {
        if (value instanceof Item) {
            process(key, (Item) value);
        } else if (value instanceof Thing) {
